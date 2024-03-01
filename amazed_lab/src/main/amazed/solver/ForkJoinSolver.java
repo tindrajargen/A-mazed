@@ -108,7 +108,7 @@ public class ForkJoinSolver
                 // move to the goal
                 maze.move(player,current);
                 step++;
-                //return the path from the start to the goal
+                //return the path from the start of the solver to the goal
                 return pathFromTo(start, current);
             }
             // If the goal is not found, continue with checking if the current node has been visited
@@ -125,39 +125,34 @@ public class ForkJoinSolver
                     }
                 }
 
-                //
+                // Iterate through the unvisited neighbors list
                 for(int nb : neighborsList){ 
-                   // if(!visited.contains(nb)){
-                        predecessor.put(nb,current);
-                        frontier.push(nb);
-                        System.out.println("player: " + player + " number of neighbors: " + maze.neighbors(current).size() + "steps:" + step);
-
-                        if((step >= forkAfter) && (neighborsList.size() > 1)){
-                            step = 0;
-                            ForkJoinSolver fjs = new ForkJoinSolver(maze,forkAfter,nb,visited);
-                            solvers.add(fjs);
-                            fjs.fork();
-                            System.out.println("fork!!!");
-                            
-                        }
-                  //  }
+                    // add the subpath to the predecessor list
+                    predecessor.put(nb,current);
+                    // add neighbor to the list of neighbors to be explored
+                    frontier.push(nb);
+                    // check that it has taken enough steps to fork and if there is a need to fork e.g. if there is more than one neighbor
+                    if((step >= forkAfter) && (neighborsList.size() > 1)){
+                        step = 0;
+                        //Create a new solver and fork
+                        ForkJoinSolver fjs = new ForkJoinSolver(maze,forkAfter,nb,visited);
+                        solvers.add(fjs);
+                        fjs.fork();           
+                    }
                 }
             }
-            }
-             return joinPaths();
-         }
-         // all nodes explored, no goal found
-       
-    
+        }
+    return joinPaths();
+    }
 
+    // joins the tasks and returns the path from the goal to the original start
     private List<Integer> joinPaths(){
-        for(ForkJoinSolver fs: solvers){
-            List<Integer> result = fs.join();
+        for(ForkJoinSolver fjs: solvers){
+            List<Integer> result = fjs.join();
             if(result != null) {
-                List<Integer> pathToGoal = pathFromTo(start, predecessor.get(fs.start));
+                List<Integer> pathToGoal = pathFromTo(start, predecessor.get(fjs.start));
                 pathToGoal.addAll(result);
                 return pathToGoal;
-
             }
         }
         return null;
