@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -96,56 +97,54 @@ public class ForkJoinSolver
     private List<Integer> parallelSearch()
     {
          // one player active on the maze at start
-         int step = 0;
-         int player = maze.newPlayer(start);
          
+         int player = maze.newPlayer(start);
+         int step = 0;
          // start with start node
          frontier.push(start);
-         // as long as not all nodes have been processed
+         // as long as not all nodes have been processed and the goal is not found
          while (!frontier.empty() && !foundgoal.get()) {
+            List<Integer> nonvisitedNeighbors = new LinkedList<Integer>();
+            
              // get the new node to process
-             int current = frontier.pop();
-             // if current node has a goal
-             if (visited.add(current)||current==start) {
-                if (maze.hasGoal(current)) {
-                 // move player to goal
-                 foundgoal.set(true);                 //Let every thread know that the goal has been found
-                 maze.move(player, current);
-                 step++;
-                 
-                 // search finished: reconstruct and return path
-                 return pathFromTo(start, current);
-                }
-             
-                 // move player to current node
-                 maze.move(player, current);
-                 step++;
-                 boolean first = true;
+            int current = frontier.pop(); // gå till kolla på första noden i frontier listan
+            //om noden inte har kollats, lägger den till i visited listan och 
+            if(maze.hasGoal(current)){
+                foundgoal.set(true);
+                maze.move(player,current);
+                step++;
+                return pathFromTo(start, current);
+            }
+            else if(visited.add(current)){
                 
+                maze.move(player,current);
 
-                 // for every node nb adjacent to current
-                 for (int nb: maze.neighbors(current)) {
+                step++;
+                
+                List<Integer> neighborsList = new LinkedList<Integer>();
+                for(int nb: maze.neighbors(current)){
+                    if(!visited.contains(nb)){
+                        neighborsList.add(nb);
+                    }
+                }
+                for(int nb : neighborsList){
                     
-                     // if nb has not been already visited,
-                     // nb can be reached from current (i.e., current is nb's predecessor)
-                     if (!visited.contains(nb)){
-                         predecessor.put(nb, current);
-                         if(first || step < forkAfter){
-                            // add nb to the nodes to be processed
-                            frontier.push(nb);
-                         }
-                      else {
-                        if(visited.add(nb)){
-                            step = 0;
-                            ForkJoinSolver forkedSolver = new ForkJoinSolver(maze, forkAfter,nb, visited);
-                            solvers.add(forkedSolver);
-                            forkedSolver.fork();
-                        }
-                      }
+                    if(!visited.contains(nb)){
+                        predecessor.put(nb,current);
+                        frontier.push(nb);
+                        System.out.println("player: " + player + " number of neighbors: " + maze.neighbors(current).size() + "steps:" + step);
 
-                    }  
-                 }
-               }
+                        if((step >= forkAfter) && (neighborsList.size() > 1)){
+                            step = 0;
+                            ForkJoinSolver fjs = new ForkJoinSolver(maze, 3,nb,visited);
+                            solvers.add(fjs);
+                            fjs.fork();
+                            System.out.println("fork!!!");
+                            
+                        }
+                    }
+                }
+            }
             }
              return joinPaths();
          }
