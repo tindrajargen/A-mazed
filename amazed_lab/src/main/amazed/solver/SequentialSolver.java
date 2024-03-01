@@ -117,6 +117,7 @@ public class SequentialSolver
 
     private List<Integer> depthFirstSearch()
     {
+        System.out.println("Sequential");
         // one player active on the maze at start
         int player = maze.newPlayer(start);
         // start with start node
