@@ -70,13 +70,6 @@ public class ForkJoinSolver
         
     }
 
-    // @Override
-    //   protected void initStructures()
-    // {
-    //     visited = new ConcurrentSkipListSet<>();
-    //     predecessor = new HashMap<>();
-    //     frontier = new Stack<>();
-    // }
     /**
      * Searches for and returns the path, as a list of node
      * identifiers, that goes from the start node to a goal node in
@@ -99,50 +92,55 @@ public class ForkJoinSolver
          // one player active on the maze at start
          
          int player = maze.newPlayer(start);
+         // keeps track of the steps, so that it does not fork all the time
          int step = 0;
          // start with start node
          frontier.push(start);
          // as long as not all nodes have been processed and the goal is not found
          while (!frontier.empty() && !foundgoal.get()) {
-            List<Integer> nonvisitedNeighbors = new LinkedList<Integer>();
             
              // get the new node to process
-            int current = frontier.pop(); // gå till kolla på första noden i frontier listan
-            //om noden inte har kollats, lägger den till i visited listan och 
+            int current = frontier.pop(); 
+             // checks if the new node has the goal
             if(maze.hasGoal(current)){
+                // make the other threads know that the goal is found 
                 foundgoal.set(true);
+                // move to the goal
                 maze.move(player,current);
                 step++;
+                //return the path from the start to the goal
                 return pathFromTo(start, current);
             }
+            // If the goal is not found, continue with checking if the current node has been visited
             else if(visited.add(current)){
                 
                 maze.move(player,current);
-
                 step++;
                 
+                // Create a list to keep track of unvisited neighbors
                 List<Integer> neighborsList = new LinkedList<Integer>();
                 for(int nb: maze.neighbors(current)){
                     if(!visited.contains(nb)){
                         neighborsList.add(nb);
                     }
                 }
-                for(int nb : neighborsList){
-                    
-                    if(!visited.contains(nb)){
+
+                //
+                for(int nb : neighborsList){ 
+                   // if(!visited.contains(nb)){
                         predecessor.put(nb,current);
                         frontier.push(nb);
                         System.out.println("player: " + player + " number of neighbors: " + maze.neighbors(current).size() + "steps:" + step);
 
                         if((step >= forkAfter) && (neighborsList.size() > 1)){
                             step = 0;
-                            ForkJoinSolver fjs = new ForkJoinSolver(maze, 3,nb,visited);
+                            ForkJoinSolver fjs = new ForkJoinSolver(maze,forkAfter,nb,visited);
                             solvers.add(fjs);
                             fjs.fork();
                             System.out.println("fork!!!");
                             
                         }
-                    }
+                  //  }
                 }
             }
             }
