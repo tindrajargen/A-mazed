@@ -1,0 +1,19 @@
+Our code begins with us instantiating two class variables:
+    - AtomicBoolean foundGoal to keep track of if the goal is found or not.
+    - ArrayList to keep track of all the instances of ForkJoinSolver that we have created.
+
+We created a new constructor that we use when we create new instances of ForkJoinSolver.
+The difference between this one and the old one is that we give it a new start node as well as the list of 
+already visited nodes.
+
+In order to make use of the variable ForkAfter we introduce a new counter called step, that increment each time
+the player moves. In the While-loop that runs the program we, in addition to checking if the frontier is empty, 
+we also check if the AtomicBoolean FoundGoal has been set to true. That would mean that one of the threads has 
+found the goal during its search. The player moves to the next node as long as it has not been visited before.
+
+We create a list of the neighbors that has not been visited before. Then we loop through this list and checks if
+the step is equal to the ForkAfter and if the there is more than one number. There is no need to fork if there
+only is one neighbor. When creating a new ForkJoinSolver we also add it to the solvers list to keep track of them. 
+
+We also have a function that uses the pathFromTo. THe function combines all subpaths into the final start
+to goal path.
