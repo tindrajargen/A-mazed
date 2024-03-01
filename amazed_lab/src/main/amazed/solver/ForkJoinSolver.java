@@ -28,8 +28,8 @@ public class ForkJoinSolver
 {
     
     private static AtomicBoolean foundgoal = new AtomicBoolean();   
-    public int player;
     private List<ForkJoinSolver> solvers = new ArrayList<ForkJoinSolver>();
+
     /**
      * Creates a solver that searches in <code>maze</code> from the
      * start node to a goal.
